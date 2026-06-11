@@ -1,0 +1,69 @@
+version: "3"
+
+networks:
+  huasen:
+    driver: bridge
+
+services:
+  redis:
+    image: redis:6-alpine
+    container_name: huasen-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - huasen
+
+  es:
+    image: elasticsearch:7.5.0
+    container_name: elasticsearch
+    restart: always
+    environment:
+      - "cluster.name=elasticsearch" #设置集群名称为elasticsearch
+      - "discovery.type=single-node" #以单一节点模式启动
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m" #设置使用jvm内存大小
+    ports:
+      - 9200:9200
+    # 挂载配置文件和数据
+    volumes:
+      - ./es/plugins:/usr/share/elasticsearch/plugins #插件文件挂载
+      - /usr/etc/mysql/datadir:/var/lib/elasticsearch/data #数据文件挂载
+      - ./es/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./es/backup:/usr/share/elasticsearch/backup
+    networks:
+      - huasen
+
+  backend:
+    build:
+      context: ./backend
+    container_name: huasen-backend
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=pro
+      - SPRING_DATASOURCE_URL=jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/huasen_portal?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - HUASEN_ELASTICSEARCH_ENABLED=${ES_ENABLED}
+      - HUASEN_ELASTICSEARCH_HOST=elasticsearch
+      - HUASEN_ELASTICSEARCH_PORT=9200
+      - QINIU_ACCESS_KEY=${QINIU_ACCESS_KEY}
+      - QINIU_SECRET_KEY=${QINIU_SECRET_KEY}
+      - QINIU_BUCKET=${QINIU_BUCKET}
+      - QINIU_DOMAIN=${QINIU_DOMAIN}
+      - BAILIAN_API_KEY=${BAILIAN_API_KEY}
+      - ALIBABA_BAILIAN_MODEL=${BAILIAN_MODEL}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - es
+    networks:
+      - huasen
+
+volumes:
+  redis-data:

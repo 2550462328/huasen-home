@@ -1,0 +1,44 @@
+# Maven
+huixingchen-server/target/
+backend/target/
+target/
+
+# Frontend
+node_modules/
+frontend/portal/dist/
+frontend/admin/dist/
+
+# Env
+.env
+deploy/.env
+deploy/store/
+deploy/log/
+
+# Local config with real credentials
+backend/src/main/resources/application-local.yml
+
+# Logs
+*.log
+
+# Workflow and session history
+.planning/
+.shiftengine/
+.claude/
+
+# Reference - old projects
+origin/
+
+# Old build artifacts (auto-generated, not used)
+huasen-server/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db

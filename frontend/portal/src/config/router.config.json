@@ -1,0 +1,78 @@
+[
+  {
+    "path": "/",
+    "redirect": "/home"
+  },
+  {
+    "path": "/home",
+    "name": "Home",
+    "menuCode": "000",
+    "component": "home/Home",
+    "title": "主页",
+    "children": []
+  },
+  {
+    "path": "/blog",
+    "name": "BlogSharon",
+    "menuCode": "000",
+    "component": "blog/BlogList",
+    "title": "Sharon博客",
+    "children": []
+  },
+  {
+    "path": "/blog/:id",
+    "name": "BlogSharonDetail",
+    "menuCode": "000",
+    "component": "blog/BlogDetail",
+    "title": "博客文章",
+    "children": []
+  },
+  {
+    "path": "/error404",
+    "name": "Error404",
+    "menuCode": "000",
+    "component": "error/Error404",
+    "title": "404",
+    "children": []
+  },
+  {
+    "path": "/error403",
+    "name": "Error403",
+    "menuCode": "000",
+    "component": "error/Error403",
+    "title": "403",
+    "children": []
+  },
+  {
+    "path": "/article",
+    "name": "Article",
+    "menuCode": "000",
+    "component": "article/Article",
+    "title": "文章",
+    "children": []
+  },
+  {
+    "path": "/read/:id",
+    "name": "Read",
+    "menuCode": "000",
+    "component": "read/Read",
+    "title": "阅读",
+    "children": []
+  },
+  {
+    "path": "/tiny-blog",
+    "name": "TinyBlog",
+    "menuCode": "000",
+    "component": "tiny-blog/TinyBlogList",
+    "title": "在档",
+    "children": []
+  },
+  {
+    "path": "/tiny-blog/:id",
+    "name": "TinyBlogDetail",
+    "menuCode": "000",
+    "component": "tiny-blog/TinyBlogDetail",
+    "title": "文章详情",
+    "children": []
+  }
+]

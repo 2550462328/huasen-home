@@ -1,0 +1,168 @@
+# TinyBlog Article Summary — Gold Standard Dataset
+#
+# Purpose: Human-labeled evaluation set for阿里百炼 AI summary generation.
+#
+# How to populate:
+# 1. Select 10 representative TinyBlog articles (4 typical + 3 edge + 3 adversarial)
+# 2. For each article, copy the full Markdown body to `input.body`
+# 3. Write the "ideal summary" (70-110 chars) in `gold_output`
+# 4. Document your reasoning in `notes`
+# 5. Tag the failure mode this row guards against in `failure_mode_target`
+#
+# Failure modes:
+# - lead_only_summary: AI只摘开头，主旨缺失
+# - clickbait: 摘要夸大或暗示正文没兑现的内容
+# - length_drift: 长度超出70-110字范围
+# - marketing_fluff: 空泛营销话术，信息密度低
+# - format_pollution: 带前缀/引号/Markdown残留
+#
+# Usage:
+# - Manual review: Portal owner inspects AI output vs gold_output for each row
+# - Promptfoo (future): Automated regression testing in CI pipeline
+# - LLM judge: qwen-max evaluates faithfulness/density/thesis-capture dimensions
+
+# === TYPICAL TECH BLOG POSTS (4 rows) ===
+
+- id: art_001
+  feature: tinyblog_summary
+  input:
+    article_id: null  # TODO: Replace with real TinyBlogPost.id
+    body: |
+      TODO: 粘贴真实文章正文 (1500-3000字，典型技术博客)
+
+      示例主题: Spring Boot集成第三方SDK、Vue组件开发实践、Docker部署指南等
+  gold_output: "TODO: 人工撰写理想摘要 (70-110字，客观、信息密度高、抓住核心论点)"
+  notes: "Typical case — 验证AI能否从标准技术文章中提取主旨"
+  failure_mode_target: none
+
+- id: art_002
+  feature: tinyblog_summary
+  input:
+    article_id: null
+    body: |
+      TODO: 第二篇典型技术文章正文
+  gold_output: "TODO: 理想摘要"
+  notes: "Typical case"
+  failure_mode_target: none
+
+- id: art_003
+  feature: tinyblog_summary
+  input:
+    article_id: null
+    body: |
+      TODO: 第三篇典型技术文章正文
+  gold_output: "TODO: 理想摘要"
+  notes: "Typical case"
+  failure_mode_target: none
+
+- id: art_004
+  feature: tinyblog_summary
+  input:
+    article_id: null
+    body: |
+      TODO: 第四篇典型技术文章正文
+  gold_output: "TODO: 理想摘要"
+  notes: "Typical case"
+  failure_mode_target: none
+
+# === EDGE CASES (3 rows) ===
+
+- id: art_edge_001
+  feature: tinyblog_summary
+  input:
+    article_id: null
+    body: |
+      TODO: 超长文章正文 (>10,000字)
+
+      测试head+tail截断策略 (前4000字+后2000字)
+      主旨应在引言或结论部分
+  gold_output: "TODO: 理想摘要 (应反映核心论点，即使正文被截断)"
+  notes: "Edge case — 验证超长文章截断后摘要质量"
+  failure_mode_target: lead_only_summary
+
+- id: art_edge_002
+  feature: tinyblog_summary
+  input:
+    article_id: null
+    body: |
+      TODO: 极短文章正文 (<500字)
+
+      测试AI在信息量有限时的表现
+  gold_output: "TODO: 理想摘要 (可能接近原文长度)"
+  notes: "Edge case — 短文章摘要不应编造内容"
+  failure_mode_target: marketing_fluff
+
+- id: art_edge_003
+  feature: tinyblog_summary
+  input:
+    article_id: null
+    body: |
+      TODO: 代码块密集的技术文章
+
+      ```java
+      // 大量代码示例
+      public class Example {
+          // ...
+      }
+      ```
+
+      正文解释较少，代码占比>60%
+  gold_output: "TODO: 理想摘要 (应基于文字解释，不直接复述代码)"
+  notes: "Edge case — 代码块应被ContentSanitizer清洗为纯文本"
+  failure_mode_target: format_pollution
+
+# === ADVERSARIAL CASES (3 rows) ===
+
+- id: art_adv_001
+  feature: tinyblog_summary
+  input:
+    article_id: null
+    body: |
+      TODO: 主旨在结论段的文章
+
+      开头2-3段是背景铺垫，核心论点在最后1-2段
+      测试AI是否只摘开头 (lead-only failure)
+  gold_output: "TODO: 理想摘要 (必须包含结论段的核心论点)"
+  notes: "Adversarial — 主旨后置，易触发lead-only错误"
+  failure_mode_target: lead_only_summary
+
+- id: art_adv_002
+  feature: tinyblog_summary
+  input:
+    article_id: null
+    body: |
+      TODO: 标题党文章
+
+      标题: "你绝对不知道的Spring Boot秘密！"
+      正文: 实际只介绍了配置文件加载顺序 (常见知识)
+
+      测试AI摘要是否夸大内容
+  gold_output: "TODO: 理想摘要 (客观陈述实际内容，不重复标题党话术)"
+  notes: "Adversarial — 标题与正文不符，摘要应忠实正文"
+  failure_mode_target: clickbait
+
+- id: art_adv_003
+  feature: tinyblog_summary
+  input:
+    article_id: null
+    body: |
+      TODO: Q&A结构的文章
+
+      Q1: 如何配置...?
+      A1: 步骤1、步骤2...
+
+      Q2: 常见问题有哪些?
+      A2: ...
+
+      测试AI是否只复制第一个问答对
+  gold_output: "TODO: 理想摘要 (概括所有Q&A主题，不只第一条)"
+  notes: "Adversarial — Q&A格式易导致只摘首条"
+  failure_mode_target: lead_only_summary
+
+# === END OF TEMPLATE ===
+#
+# Next steps after populating:
+# 1. Run ArticleSummaryService on each input.body
+# 2. Compare AI output with gold_output
+# 3. Calculate edit_ratio: Levenshtein(ai_output, gold_output) / max(len)
+# 4. If avg edit_ratio > 0.4 → revise prompts in PromptTemplates.java

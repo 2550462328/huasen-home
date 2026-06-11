@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>花森导航收藏</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <!-- ==================== State 1 — LOGIN (EXT-01) ==================== -->
+    <section id="view-login" class="view" aria-label="登录">
+      <header class="header-bar">
+        <span class="brand">花森导航收藏</span>
+      </header>
+      <div class="body-pad">
+        <div class="form-row">
+          <label class="label" for="login-id">账号</label>
+          <input
+            id="login-id"
+            class="input"
+            type="text"
+            autocomplete="username"
+            placeholder="请输入账号"
+          />
+        </div>
+        <div class="form-row">
+          <label class="label" for="login-password">密码</label>
+          <input
+            id="login-password"
+            class="input"
+            type="password"
+            autocomplete="current-password"
+            placeholder="请输入密码"
+          />
+        </div>
+        <button id="login-btn" class="btn btn-primary btn-full" type="button">
+          <span class="btn-label">登录</span>
+        </button>
+        <!-- Reserved-height error line — destructive caption, empty by default. -->
+        <p id="login-error" class="error-line" role="alert"></p>
+      </div>
+    </section>
+
+    <!-- ==================== State 2 — FORM / capture (EXT-04..08) ==================== -->
+    <section id="view-form" class="view" aria-label="收藏当前页" hidden>
+      <header class="header-bar header-bar-split">
+        <span class="brand">花森导航收藏</span>
+        <a id="logout-link" class="link-caption" href="#" role="button">退出登录</a>
+      </header>
+      <div class="body-pad">
+        <div class="capture-row">
+          <div id="favicon-preview" class="favicon-tile" aria-hidden="true">
+            <!-- Inline globe placeholder; replaced by <img> when a valid favicon is captured. -->
+            <svg
+              class="placeholder-glyph"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18" />
+              <path d="M12 3a14 14 0 0 1 0 18" />
+              <path d="M12 3a14 14 0 0 0 0 18" />
+            </svg>
+          </div>
+          <div class="capture-fields">
+            <div class="form-row">
+              <label class="label" for="site-title">标题</label>
+              <input id="site-title" class="input" type="text" />
+            </div>
+            <div class="form-row">
+              <label class="label" for="site-url">网址</label>
+              <div id="site-url" class="url-pill" title=""></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="label" for="column-search">栏目</label>
+          <!-- Searchable column combobox (EXT-07/08): filter input + inline list. -->
+          <div id="column-section" class="column-combobox">
+            <input
+              id="column-search"
+              class="input"
+              type="text"
+              placeholder="搜索或选择栏目"
+              autocomplete="off"
+              role="combobox"
+              aria-expanded="false"
+              aria-controls="column-list"
+            />
+            <!-- Inline dropdown list; rows injected by popup.js (data-id = column._id). -->
+            <ul id="column-list" class="column-list" role="listbox" hidden></ul>
+            <!-- Empty state: shown in place of the list when findByCode returns []. -->
+            <div id="column-empty" class="column-empty" hidden>
+              <p class="column-empty-title">暂无可用栏目</p>
+              <p class="column-empty-body">
+                当前账号没有可收藏的栏目，请在花森后台创建栏目后重试。
+              </p>
+              <!-- Escape hatch (WR-01): a session that expired between popup opens
+                   cannot be detected at boot (findByCode has no admin guard and
+                   returns 200+[] for an expired token), so offer a manual re-login
+                   instead of stranding the user in a save-disabled FORM. -->
+              <a id="empty-relogin-link" class="link-caption" href="#" role="button"
+                >重新登录</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="label" for="site-description">
+            描述
+            <span id="desc-status" class="desc-status" hidden></span>
+          </label>
+          <textarea
+            id="site-description"
+            class="input textarea"
+            rows="2"
+            maxlength="15"
+            placeholder="保存时自动生成，可手动编辑"
+          ></textarea>
+        </div>
+
+        <button id="save-btn" class="btn btn-primary btn-full" type="button" disabled>
+          <span class="btn-label">保存到花森导航</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== State 3 — RESULT (EXT-12) ==================== -->
+    <section id="view-result" class="view" aria-label="收藏成功" hidden>
+      <div class="result-stack">
+        <span class="result-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M8 12.5l3 3 5-6" />
+          </svg>
+        </span>
+        <h1 class="result-title">收藏成功</h1>
+        <p id="result-site-name" class="result-caption"></p>
+        <button id="again-btn" class="btn btn-secondary btn-full" type="button">
+          <span class="btn-label">继续收藏</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== Toast (shared, EXT-12/14) ==================== -->
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

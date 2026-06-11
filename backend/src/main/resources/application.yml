@@ -1,0 +1,76 @@
+spring:
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
+  jpa:
+    open-in-view: true
+    properties:
+      hibernate:
+        default_schema: huasen_portal
+
+management:
+  health:
+    elasticsearch:
+      enabled: false
+
+server:
+  port: 8080
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+huasen:
+  icon-source-path: origin/huasenjio-compose
+  jwt:
+    secret: huasen-jwt-secret-key-2024-portal
+  aes:
+    key: dj38Ca8F8hag23nD
+    iv: k4h9HdcXmEr83nsF
+  rsa:
+    public-key: |
+      -----BEGIN PUBLIC KEY-----
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAykOjPXYErze4pX/r6au/
+      cHOpnWlyP5AO1qXblDbQ7ZbTO2QG4MLVqz938mCstV+urDfySTHBVbeA0iwg7iye
+      WULR7+IHHdE7QQRCNpV3t+EPq4xbKvGv9m7U6E6vh+z4SRJDuX0rWzxhbdYsIQZd
+      VDs8eqfbLVMjS1+BEB/S8tFsgjWpIMfMQYF1Ale3GQjy1kLturpeAVQCnAA5dXpM
+      KU4I4sFpDPL58DBHziPc0UkyJCt5Y9xhEvqSaTInqzFoHKnjx1xw6bM7brsZveRT
+      +x8PIqepeHpI2cxjRcLKl3v/hO1qOk2a4OrY+K3z36o7KS4DZQrN/7YBWx2p3ThL
+      pQIDAQAB
+      -----END PUBLIC KEY-----
+    private-key: |
+      -----BEGIN PRIVATE KEY-----
+      MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDKQ6M9dgSvN7il
+      f+vpq79wc6mdaXI/kA7WpduUNtDtltM7ZAbgwtWrP3fyYKy1X66sN/JJMcFVt4DS
+      LCDuLJ5ZQtHv4gcd0TtBBEI2lXe34Q+rjFsq8a/2btToTq+H7PhJEkO5fStbPGFt
+      1iwhBl1UOzx6p9stUyNLX4EQH9Ly0WyCNakgx8xBgXUCV7cZCPLWQu26ul4BVAKc
+      ADl1ekwpTgjiwWkM8vnwMEfOI9zRSTIkK3lj3GES+pJpMierMWgcqePHXHDpsztu
+      uxm95FP7Hw8ip6l4ekjZzGNFwsqXe/+E7Wo6TZrg6tj4rfPfqjspLgNlCs3/tgFb
+      HandOEulAgMBAAECggEAVkkgfHm6ad1FgiTeSWMhWiGdfC+ds4wLKHq8/6+a1aCA
+      IFf9ryiu6k07KEUhqIZXB9UeISd+qMiNxhtZOQID02R0Fve/vXKi6ouci5ib5++1
+      NaO8yMcuH90MKsZWj5ACI3oNNjY1pshNcAPr83K5odNba5/sGpva9K6banuJDFiU
+      pwWn1+MsqiZ74tLRlPKteyvGw0b6OWjxMeIr7/G1O30wd6MiAKObKK/ODO9CQlC2
+      wUAIbFqewudv26ZzkMDjpVsI42p0/xRGBQDt4vGGfKiBj05fofPl3kn7kLmY+edn
+      /yfvONhdHjnQVzITa9DSU1IXY8lVFHEGxuWM+V3OyQKBgQDu3YFTlsiHNTcTgs/f
+      LgLaMtVnjFtqu01j6F6HL9mO5ytFCE9GtaEnbNVy1z5BoAm3JgVcd63sArKFiuUn
+      GuaVglCKbjhgFgwnGPI11QAvPAOB2Qu19XrTwVQa4C0lJ6JrGuZe+1gLbbF+7bLV
+      +LMUOEU9o6YFWcMQ7fRrcLguAwKBgQDYxf624LgU0ThS301Y78O5r5g2ePZ/F1W6
+      M1XTlSWgllYBeDezOAH12tisYCrbEpniATfhN9Lc4qlXWz+yGVNfC2PbyfTCTdhL
+      kwPsf/GXM8WWe4Nid+LV5bmy5loq8dCpgXzB8w4LoFuE2ZFxr57q+32Pg04taNGP
+      txajinQjNwKBgAwqiA3D3k7UrQt3XDMX2tlWQXxWr8lN5PEzwqzMCR64M4H+nFsT
+      oTOq3WxN/kPFbPlBHIDLL7aXpJQcsPM+8YOn8YY7eu+Z7+CF6sBHKw0810jjzy7j
+      Y/ApJql/xYzg6ereoeEwmBls6t92J+eyFRzwiMZM8YXQPpk8JXjbcuYVAoGAZrWJ
+      doULM3HeSgXb1CPmjPiSGl0+DgG0cMEaDWJBrdENdyzK13PWGfNTbnkyVRJ/LwJ8
+      w417r4UFz4pAp9YwFnyDGAScn+PadBR4a3pDseyp1h83pVRAejCayBU069wfjfD4
+      d7z+DqwwMMYVj9QybAw09ea1B/b+NCX/6AUV+gkCgYEAqlrfNpXSaFbxCtDy4oA3
+      kHRrmwkjlGj07cSBCCInw5yL1qnSPaLVaK+l4fN68+Ac0ZvH9XFYiXYLWV8vGLUm
+      DyeS4WrWYM2tCoqSp/JnwReRiJPYx3lSfaB1qERyTRxKyFoMgcdybyTvIDTXiOqr
+      sHAMEhW3k0BqdsBQ9KSbExU=
+      -----END PRIVATE KEY-----
+  elasticsearch:
+    enabled: false

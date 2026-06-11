@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:host.docker.internal}:${DB_PORT:3306}/huasen_portal?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${DB_USER:huasen}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  data:
+    redis:
+      host: huasen-redis
+      port: 6379
+      password: ${REDIS_PASSWORD:}
+
+logging:
+  level:
+    com.huasen: INFO
+
+# 七牛云存储配置
+qiniu:
+  access-key: ${QINIU_ACCESS_KEY:}
+  secret-key: ${QINIU_SECRET_KEY:}
+  bucket: ${QINIU_BUCKET:}
+  domain: ${QINIU_DOMAIN:}
+
+# Tiny Blog 数据迁移配置
+tiny-blog:
+  migration:
+    enabled: false  # Set to true manually when ready to migrate
+    posts-dir: origin/tiny-blog/posts
+    statistic-file: origin/tiny-blog/statistic.json1
+    images-source-dir: origin/tiny-blog/static/images
+  cover-upload:
+    enabled: false  # 设为true运行一次,将6张预设封面以固定key上传到七牛,完成后改回false
+
+# 阿里百炼大模型配置
+alibaba:
+  bailian:
+    api-key: ${BAILIAN_API_KEY:}
+    model: ${BAILIAN_MODEL:qwen3.7-max}
+    max-tokens: ${BAILIAN_MAX_TOKENS:800}
+    timeout-seconds: ${BAILIAN_TIMEOUT:30}

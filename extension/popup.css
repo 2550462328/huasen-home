@@ -1,0 +1,500 @@
+/* extension/popup.css — Hand-written token set for the 360px popup frame.
+ *
+ * Implements the UI-SPEC contract:
+ *   - Color tokens (Portal accent #1e80ff)
+ *   - 4-point spacing scale (xs/sm/md/lg/xl)
+ *   - 36px control height, 6px radius, 14px body text
+ *   - Focus ring (2px accent box-shadow)
+ *   - Disabled state (50% opacity + not-allowed)
+ *   - CSS-only spinner (no GIF)
+ *   - Toast variants (success accent-wash, error #fdeaea)
+ *
+ * No external CSS, no preprocessor — vanilla per locked decision.
+ */
+
+:root {
+  /* Color */
+  --color-bg: #ffffff;
+  --color-secondary: #f4f5f5;
+  --color-accent: #1e80ff;
+  --color-accent-hover: #176ce0;
+  --color-accent-wash: #e8f4ff;
+  --color-destructive: #d96a6a;
+  --color-destructive-wash: #fdeaea;
+  --color-success: #3aa675;
+  --color-ink: #1d2129;
+  --color-ink-soft: #8a919f;
+  --color-line: #e6e8eb;
+
+  /* Spacing scale (4pt) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Sizing */
+  --control-height: 36px;
+  --radius: 6px;
+  --frame-width: 360px;
+
+  /* Typography */
+  --font-family-sys: -apple-system, "Segoe UI", "Microsoft YaHei", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-size-body: 14px;
+  --font-size-label: 13px;
+  --font-size-caption: 12px;
+  --font-size-title: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: var(--frame-width);
+  font-family: var(--font-family-sys);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  /* Compact popup; let content grow but Chrome caps roughly at 600px. */
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+/* View regions — exactly one is visible at a time (popup.js toggles [hidden]). */
+.view {
+  width: 100%;
+}
+[hidden] {
+  display: none !important;
+}
+
+.body-pad {
+  padding: var(--space-md);
+}
+
+/* Header bar — secondary-bg, 32px tall, product name in label style. */
+.header-bar {
+  height: var(--space-xl);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-md);
+  background: var(--color-secondary);
+  border-bottom: 1px solid var(--color-line);
+}
+.header-bar-split {
+  justify-content: space-between;
+}
+.brand {
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  color: var(--color-ink);
+  line-height: 1.4;
+}
+
+/* Caption text link (退出登录 / 继续收藏 secondary). */
+.link-caption {
+  font-size: var(--font-size-caption);
+  font-weight: 400;
+  color: var(--color-accent);
+  text-decoration: none;
+  cursor: pointer;
+  /* 32px hit area for the link. */
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+.link-caption:hover,
+.link-caption:focus-visible {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+  outline: none;
+}
+
+/* Form row — label on top, input/control below, gap sm; rows separated by md. */
+.form-row {
+  display: block;
+  margin-bottom: var(--space-md);
+}
+.form-row:last-child {
+  margin-bottom: 0;
+}
+.label {
+  display: block;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: var(--space-sm);
+  color: var(--color-ink);
+}
+
+/* Inputs — 36px height, 1px line border, 6px radius, 14px body text. */
+.input {
+  display: block;
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 var(--space-sm);
+  font-family: inherit;
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.input::placeholder {
+  color: var(--color-ink-soft);
+}
+.input:focus,
+.input:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(30, 128, 255, 0.3);
+}
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.input.is-invalid {
+  border-color: var(--color-destructive);
+}
+
+/* Textarea — inherits .input, adapts for multiline (min-height, vertical resize, padding). */
+.textarea {
+  display: block;
+  width: 100%;
+  min-height: 60px;
+  padding: var(--space-sm);
+  font-family: inherit;
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  outline: none;
+  resize: vertical;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.textarea::placeholder {
+  color: var(--color-ink-soft);
+}
+.textarea:focus,
+.textarea:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(30, 128, 255, 0.3);
+}
+.textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Description status indicator (生成中…) — caption size, ink-soft, inline. */
+.desc-status {
+  font-size: var(--font-size-caption);
+  color: var(--color-ink-soft);
+  margin-left: var(--space-sm);
+}
+
+/* Read-only URL pill — secondary bg, no border, ellipsis, caption type, ink-soft. */
+.url-pill {
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 var(--space-sm);
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-caption);
+  color: var(--color-ink-soft);
+  background: var(--color-secondary);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Capture row — favicon tile inline-left of the title/url stack. */
+.capture-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.capture-fields {
+  flex: 1 1 auto;
+  min-width: 0; /* allow ellipsis to compute */
+}
+
+/* Favicon preview tile — 32px square, secondary bg, 6px radius. */
+.favicon-tile {
+  width: var(--space-xl);
+  height: var(--space-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-secondary);
+  border-radius: var(--radius);
+  color: var(--color-ink-soft);
+  flex: 0 0 auto;
+  /* Align with the label baseline above the title input. */
+  margin-top: 26px;
+  overflow: hidden;
+}
+.favicon-tile img {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+.favicon-tile .placeholder-glyph {
+  display: block;
+}
+
+/* Column combobox (EXT-07/08) — search input + inline dropdown list. */
+.column-combobox {
+  position: relative;
+  width: 100%;
+}
+
+/* Inline dropdown list — sits directly under the search input. */
+.column-list {
+  list-style: none;
+  margin: var(--space-xs) 0 0;
+  padding: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+/* List row — column name in Body type; 36px control-height rhythm. */
+.column-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--control-height);
+  padding: 0 var(--space-sm);
+  font-size: var(--font-size-body);
+  line-height: 1.4;
+  color: var(--color-ink);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  /* leave room so the selected-row left border doesn't shift text. */
+  padding-left: calc(var(--space-sm) - 3px);
+  word-break: break-all;
+}
+.column-row + .column-row {
+  border-top: 1px solid var(--color-line);
+}
+/* Hover OR keyboard-highlighted row → secondary bg. */
+.column-row:hover,
+.column-row.is-active {
+  background: var(--color-secondary);
+}
+/* Selected row → accent-wash bg + 3px accent left-border + trailing check. */
+.column-row.is-selected {
+  background: var(--color-accent-wash);
+  border-left-color: var(--color-accent);
+  color: var(--color-ink);
+}
+.column-row .row-check {
+  flex: 0 0 auto;
+  margin-left: var(--space-sm);
+  color: var(--color-accent);
+  display: none;
+}
+.column-row.is-selected .row-check {
+  display: inline-flex;
+}
+
+/* Empty-state block — shown in place of the list when no columns are available. */
+.column-empty {
+  margin-top: var(--space-xs);
+  padding: var(--space-md);
+  border: 1px dashed var(--color-line);
+  border-radius: var(--radius);
+  text-align: center;
+}
+.column-empty-title {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.column-empty-body {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  height: var(--control-height);
+  padding: 0 var(--space-md);
+  font-family: inherit;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.btn-full {
+  width: 100%;
+}
+.btn-primary {
+  background: var(--color-accent);
+  color: #ffffff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(30, 128, 255, 0.3);
+}
+.btn-secondary {
+  background: var(--color-bg);
+  color: var(--color-accent);
+  border-color: var(--color-line);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-accent-wash);
+  border-color: var(--color-accent);
+}
+.btn-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(30, 128, 255, 0.3);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading spinner — pure CSS, attached to .btn.loading. No GIF, no library.
+ * Renders a 14px ring spinning over the button label via ::after. */
+.btn.loading::after {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: rotate 0.8s linear infinite;
+  margin-left: var(--space-xs);
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reserved-height destructive error line under the LOGIN button.
+ * Reserve the line height so populating it doesn't shift layout (UI-SPEC). */
+.error-line {
+  margin: var(--space-sm) 0 0;
+  min-height: calc(var(--font-size-caption) * 1.4);
+  font-size: var(--font-size-caption);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--color-destructive);
+}
+
+/* Result state — centered stack with xl breathing room. */
+.result-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  gap: var(--space-md);
+}
+.result-check {
+  color: var(--color-success);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.result-title {
+  margin: 0;
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-ink);
+}
+.result-caption {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+  word-break: break-all;
+}
+
+/* Toast — bottom-pinned, full width minus 16px gutters, non-modal. */
+.toast {
+  position: fixed;
+  left: var(--space-md);
+  right: var(--space-md);
+  bottom: var(--space-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius);
+  font-size: var(--font-size-caption);
+  line-height: 1.4;
+  color: var(--color-ink);
+  background: var(--color-secondary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  pointer-events: none;
+}
+.toast-glyph {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  /* Nudge the 16px glyph onto the caption baseline. */
+  margin-top: 1px;
+}
+.toast-msg {
+  flex: 1 1 auto;
+  word-break: break-all;
+}
+.toast.is-success .toast-glyph {
+  color: var(--color-success);
+}
+.toast.is-error .toast-glyph {
+  color: var(--color-destructive);
+}
+.toast.is-success {
+  background: var(--color-accent-wash);
+  border-left-color: var(--color-success);
+}
+.toast.is-error {
+  background: var(--color-destructive-wash);
+  border-left-color: var(--color-destructive);
+}

@@ -1,0 +1,137 @@
+[
+  {
+    "path": "/",
+    "redirect": "/home"
+  },
+  {
+    "path": "/home",
+    "name": "Home",
+    "menuCode": "000",
+    "component": "home/Home",
+    "keepAlive": true,
+    "title": "数据表盘",
+    "children": []
+  },
+  {
+    "path": "/error404",
+    "name": "Error404",
+    "menuCode": "000",
+    "component": "error/Error404",
+    "title": "404",
+    "children": []
+  },
+  {
+    "path": "/error403",
+    "name": "Error403",
+    "menuCode": "000",
+    "component": "error/Error403",
+    "title": "403",
+    "children": []
+  },
+  {
+    "path": "/account-manage",
+    "name": "AccountManage",
+    "menuCode": "000",
+    "component": "account-manage/AccountManage",
+    "keepAlive": true,
+    "title": "账号管理",
+    "children": []
+  },
+  {
+    "path": "/site-manage",
+    "name": "SiteManage",
+    "menuCode": "000",
+    "component": "site-manage/SiteManage",
+    "keepAlive": true,
+    "title": "网链管理",
+    "children": []
+  },
+  {
+    "path": "/journal-manage",
+    "name": "JournalManage",
+    "menuCode": "000",
+    "component": "journal-manage/JournalManage",
+    "keepAlive": true,
+    "title": "订阅管理",
+    "children": []
+  },
+  {
+    "path": "/column-manage",
+    "name": "ColumnManage",
+    "menuCode": "000",
+    "component": "column-manage/ColumnManage",
+    "keepAlive": true,
+    "title": "栏目管理",
+    "children": []
+  },
+  {
+    "path": "/record-manage",
+    "name": "RecordManage",
+    "menuCode": "000",
+    "component": "record-manage/RecordManage",
+    "keepAlive": true,
+    "title": "日志管理",
+    "children": []
+  },
+  {
+    "path": "/setting",
+    "name": "Setting",
+    "menuCode": "001",
+    "component": "setting/Setting",
+    "keepAlive": true,
+    "title": "系统配置",
+    "children": []
+  },
+  {
+    "path": "/tiny-blog-manage",
+    "name": "TinyBlogManage",
+    "menuCode": "000",
+    "component": "tiny-blog-manage/TinyBlogManage",
+    "keepAlive": true,
+    "title": "在档",
+    "children": []
+  },
+  {
+    "path": "/tiny-blog-editor",
+    "name": "TinyBlogEditor",
+    "menuCode": "000",
+    "component": "tiny-blog-manage/TinyBlogEditor",
+    "title": "编辑文章",
+    "children": []
+  },
+  {
+    "path": "/tiny-blog-category",
+    "name": "TinyBlogCategoryManage",
+    "menuCode": "000",
+    "component": "tiny-blog-manage/TinyBlogCategoryManage",
+    "keepAlive": true,
+    "title": "tiny-blog分类管理",
+    "children": []
+  },
+  {
+    "path": "/blog-sharon-manage",
+    "name": "BlogSharonManage",
+    "menuCode": "000",
+    "component": "blog-sharon-manage/BlogSharonManage",
+    "keepAlive": true,
+    "title": "已归档",
+    "children": []
+  },
+  {
+    "path": "/blog-sharon-editor",
+    "name": "BlogSharonEditor",
+    "menuCode": "000",
+    "component": "blog-sharon-manage/BlogSharonEditor",
+    "title": "编辑文章",
+    "children": []
+  },
+  {
+    "path": "/blog-sharon-tag-category",
+    "name": "BlogSharonTagCategory",
+    "menuCode": "000",
+    "component": "blog-sharon-manage/BlogSharonTagCategory",
+    "keepAlive": true,
+    "title": "blog-sharon分类标签管理",
+    "children": []
+  }
+]
