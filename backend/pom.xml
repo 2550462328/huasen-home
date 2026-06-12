@@ -28,6 +28,8 @@
         <hypersistence-utils.version>3.9.0</hypersistence-utils.version>
         <jjwt.version>0.12.6</jjwt.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <!-- 覆盖 Spring Boot 默认的 ES 版本管理,使 rest-client 等 transitive 依赖随客户端降到 7.17.x 以兼容 7.5.0 服务端 -->
+        <elasticsearch.version>7.17.28</elasticsearch.version>
     </properties>
 
     <dependencies>
@@ -55,6 +57,22 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+        </dependency>
+        <!-- ES Java 客户端锁定在 7.17.x:co.elastic.clients 新客户端最早从 7.15 起,
+             8.x 强制 X-Elastic-Product 校验;7.5.0 服务端不发该头,
+             因此通过 ElasticsearchConfig 的 HttpResponseInterceptor 补 header 绕过校验。
+             rest-client 必须随客户端一并降到 7.17.x(spring-data-elasticsearch 5.5
+             默认会把 rest-client 强提到 8.18,产品校验逻辑就在 rest-client 里)。 -->
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>7.17.28</version>
+        </dependency>
+        <!-- 显式锁定 rest-client 到 7.17.x(见上方说明) -->
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>7.17.28</version>
         </dependency>
         <!-- Database -->
         <dependency>

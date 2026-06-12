@@ -22,7 +22,7 @@
 
 import { getToken, setToken, setCode, clearToken } from './storage.js';
 
-export const API_BASE = 'http://localhost:8080';
+export const API_BASE = 'https://www.huitogo.club/api';
 
 /** Thrown when the backend returns 403 while a token was present (session expired/invalid). */
 export class SessionExpiredError extends Error {
@@ -128,6 +128,32 @@ export async function findByCode() {
   }
   if (res.status !== 200) {
     throw new ApiError(body.msg || '获取栏目失败', res.status);
+  }
+  return body.data || [];
+}
+
+/**
+ * POST /journal/findByCode — list subscription sources (订阅源) the current user
+ * can see. Each Journal carries `columnStore` — a JSON-string array of column
+ * keys (numeric column id, or legacy mongo_id string). The popup uses this to
+ * cascade the 栏目 selector under the chosen 订阅.
+ * @returns {Promise<Array>} body.data — array of { _id, id, name, columnStore, ... }
+ * @throws {SessionExpiredError} on 403 with token (consistent with findByCode).
+ * @throws {ApiError} on other non-200.
+ */
+export async function findJournalByCode() {
+  const token = await getToken();
+  const res = await authedPost('/journal/findByCode', {});
+  const body = await safeJson(res);
+  if (res.status === 403) {
+    if (token) {
+      await clearToken();
+      throw new SessionExpiredError(SESSION_EXPIRED_MSG);
+    }
+    throw new ApiError(body.msg || '权限不足', 403);
+  }
+  if (res.status !== 200) {
+    throw new ApiError(body.msg || '获取订阅源失败', res.status);
   }
   return body.data || [];
 }

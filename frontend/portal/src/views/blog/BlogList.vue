@@ -293,6 +293,8 @@ export default {
       selectedCategoryId: null,
       selectedCategoryName: '',
       searchKeyword: '',
+      activeSearchKeyword: '', // 当前生效的搜索词，翻页时复用，避免输入框被清改后翻页错乱
+      searchMode: false, // 是否处于搜索结果状态
       esAvailable: true,
       loading: false,
       savedScrollTop: 0, // keep-alive 缓存时保存滚动位置
@@ -414,6 +416,8 @@ export default {
 
     fetchArticles(page) {
       this.loading = true;
+      this.searchMode = false;
+      this.activeSearchKeyword = '';
       let params = { size: this.pageSize };
       if (this.selectedCategoryId) {
         params.categoryId = this.selectedCategoryId;
@@ -438,18 +442,25 @@ export default {
       if (!this.esAvailable || !this.searchKeyword.trim()) {
         return;
       }
+      this.activeSearchKeyword = this.searchKeyword.trim();
+      this.selectedCategoryId = null;
+      this.selectedCategoryName = '';
+      this.fetchSearchResults(1);
+    },
+
+    // 执行/翻页搜索结果，统一走这里复用生效搜索词
+    fetchSearchResults(page) {
       this.loading = true;
+      this.searchMode = true;
       this.API.searchBlogSharonPosts(
-        { keyword: this.searchKeyword, page: 1, size: this.pageSize },
+        { keyword: this.activeSearchKeyword, page, size: this.pageSize },
         { notify: false }
       )
         .then(res => {
           let data = res.data || {};
           this.articles = data.content || [];
           this.totalElements = data.totalElements || 0;
-          this.currentPage = 1;
-          this.selectedCategoryId = null;
-          this.selectedCategoryName = '';
+          this.currentPage = data.currentPage || page;
           this.loading = false;
         })
         .catch(() => {
@@ -481,7 +492,11 @@ export default {
 
     handlePageChange(page) {
       this.currentPage = page;
-      this.fetchArticles(page);
+      if (this.searchMode) {
+        this.fetchSearchResults(page);
+      } else {
+        this.fetchArticles(page);
+      }
       // 滚动到顶部
       document.querySelector('.main-content').scrollTop = 0;
     },

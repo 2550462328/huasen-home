@@ -15,8 +15,8 @@ function resolve(dir) {
 }
 
 module.exports = {
-  outputDir: '../../backend/src/main/resources/static/admin', // 输出路径
-  publicPath: '/admin/',
+  outputDir: '../../deploy/www/admin', // 输出路径
+  publicPath: './',
   productionSourceMap: false,
   runtimeCompiler: true, // 运行时编译
   configureWebpack: config => {

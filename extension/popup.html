@@ -81,26 +81,58 @@
         </div>
 
         <div class="form-row">
+          <label class="label" for="journal-search">订阅</label>
+          <!-- Subscription (Journal) combobox. Picking one cascades into the
+               栏目 selector below: the 栏目 list is filtered to that 订阅's
+               columnStore. Disabled state for 栏目 until 订阅 is chosen. -->
+          <div id="journal-section" class="column-combobox">
+            <input
+              id="journal-search"
+              class="input"
+              type="text"
+              placeholder="搜索或选择订阅"
+              autocomplete="off"
+              role="combobox"
+              aria-expanded="false"
+              aria-controls="journal-list"
+            />
+            <ul id="journal-list" class="column-list" role="listbox" hidden></ul>
+            <div id="journal-empty" class="column-empty" hidden>
+              <p class="column-empty-title">暂无可用订阅</p>
+              <p class="column-empty-body">
+                当前账号没有可收藏的订阅，请在花森后台创建订阅源并绑定栏目后重试。
+              </p>
+              <a id="journal-empty-relogin-link" class="link-caption" href="#" role="button"
+                >重新登录</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
           <label class="label" for="column-search">栏目</label>
-          <!-- Searchable column combobox (EXT-07/08): filter input + inline list. -->
+          <!-- Searchable column combobox (EXT-07/08): filter input + inline list.
+               Cascaded under the 订阅 above — disabled until a 订阅 is chosen. -->
           <div id="column-section" class="column-combobox">
             <input
               id="column-search"
               class="input"
               type="text"
-              placeholder="搜索或选择栏目"
+              placeholder="请先选择订阅"
               autocomplete="off"
               role="combobox"
               aria-expanded="false"
               aria-controls="column-list"
+              disabled
             />
             <!-- Inline dropdown list; rows injected by popup.js (data-id = column._id). -->
             <ul id="column-list" class="column-list" role="listbox" hidden></ul>
-            <!-- Empty state: shown in place of the list when findByCode returns []. -->
+            <!-- Empty state: shown in place of the list when the picked 订阅 has
+                 no resolvable columns under the user's permission code. -->
             <div id="column-empty" class="column-empty" hidden>
-              <p class="column-empty-title">暂无可用栏目</p>
+              <p class="column-empty-title">该订阅下暂无可用栏目</p>
               <p class="column-empty-body">
-                当前账号没有可收藏的栏目，请在花森后台创建栏目后重试。
+                请切换其他订阅，或在花森后台为当前订阅绑定栏目后重试。
               </p>
               <!-- Escape hatch (WR-01): a session that expired between popup opens
                    cannot be detected at boot (findByCode has no admin guard and

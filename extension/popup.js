@@ -17,7 +17,7 @@
 //
 // Security (T-11-01): never console.log credentials or the JWT.
 
-import { login, findByCode, quickAdd, preview, SessionExpiredError, ApiError } from './api.js';
+import { login, findByCode, findJournalByCode, quickAdd, preview, SessionExpiredError, ApiError } from './api.js';
 import { getToken, clearToken } from './storage.js';
 
 // ===== DOM handles (resolved on DOMContentLoaded) ============================
@@ -46,6 +46,12 @@ let columnListEl;
 let columnEmptyEl;
 let emptyReloginLink;
 
+// Journal (订阅) combobox handles — cascades into the column selector.
+let journalSearchInput;
+let journalListEl;
+let journalEmptyEl;
+let journalEmptyReloginLink;
+
 // RESULT view handles.
 let resultSiteName;
 let againBtn;
@@ -55,14 +61,25 @@ let againBtn;
 /** {title, url, icon, description} captured from the active tab on FORM entry. icon='' when invalid. */
 export const currentCapture = { title: '', url: '', icon: '', description: '' };
 
-/** Full column list from findByCode() — { _id, id, name, ... }[]. */
+/** Full column list from findByCode() — { _id, id, name, ... }[]. Authoritative pool. */
 let allColumns = [];
+/** Subset of allColumns belonging to the currently-picked 订阅; what the 栏目 combobox renders against. */
+let scopedColumns = [];
 /** The bound column._id once a row is selected; null until then. */
 let selectedColumnId = null;
 /** Index of the keyboard-highlighted row within the currently-rendered (filtered) set. */
 let activeRowIndex = -1;
 /** The filtered subset currently rendered into #column-list. */
 let renderedColumns = [];
+
+/** Full journal list from findJournalByCode() — { _id, id, name, columnStore, ... }[]. */
+let allJournals = [];
+/** The bound journal._id once a 订阅 row is selected; null until then. */
+let selectedJournalId = null;
+/** Index of the keyboard-highlighted journal row within the currently-rendered set. */
+let journalActiveRowIndex = -1;
+/** The filtered subset currently rendered into #journal-list. */
+let renderedJournals = [];
 
 let toastTimer = null;
 
@@ -266,6 +283,8 @@ async function enterForm() {
   // Save stays disabled until a column is selected AND title is non-blank.
   if (saveBtn) saveBtn.disabled = true;
   // Reset the visible empty/list state before (re)loading.
+  if (journalListEl) journalListEl.hidden = true;
+  if (journalEmptyEl) journalEmptyEl.hidden = true;
   if (columnListEl) columnListEl.hidden = true;
   if (columnEmptyEl) columnEmptyEl.hidden = true;
 
@@ -330,43 +349,113 @@ async function enterForm() {
 // ===== Column combobox (EXT-07/08) ==========================================
 
 /**
- * Fetch the columns the current user can save into and render them into the list.
+ * Fetch the 订阅源 (journals) and the full column pool, then render the 订阅
+ * selector. The 栏目 selector stays disabled until a 订阅 is picked, at which
+ * point selectJournal() scopes the column list to that 订阅's columnStore.
  *
- * findByCode() throws SessionExpiredError on 403-with-token (EXT-03). We let that
- * propagate to enterForm()'s catch which clears + routes back to LOGIN with the
- * expiry toast — so the combobox never renders against a dead session.
+ * Both findJournalByCode() and findByCode() throw SessionExpiredError on
+ * 403-with-token (EXT-03). We let that propagate to enterForm()'s catch which
+ * clears + routes back to LOGIN with the expiry toast.
  */
 export async function loadColumns() {
-  // Reset combobox state on each (re)entry.
+  // Reset both comboboxes on each (re)entry.
   selectedColumnId = null;
+  selectedJournalId = null;
   activeRowIndex = -1;
+  journalActiveRowIndex = -1;
   allColumns = [];
+  scopedColumns = [];
   renderedColumns = [];
+  allJournals = [];
+  renderedJournals = [];
   if (columnSearchInput) {
     columnSearchInput.value = '';
     columnSearchInput.setAttribute('aria-expanded', 'false');
   }
+  if (journalSearchInput) {
+    journalSearchInput.value = '';
+    journalSearchInput.setAttribute('aria-expanded', 'false');
+  }
+  // 栏目 disabled until a 订阅 is chosen.
+  setColumnComboEnabled(false);
 
-  const columns = await findByCode();
+  // Load journals and the full column pool in parallel.
+  const [journals, columns] = await Promise.all([findJournalByCode(), findByCode()]);
   allColumns = Array.isArray(columns) ? columns : [];
+  allJournals = Array.isArray(journals) ? journals : [];
 
-  if (allColumns.length === 0) {
-    // Empty-columns case → show the empty state instead of an empty list.
+  if (allJournals.length === 0) {
+    // No subscriptions → show the journal empty state; 栏目 stays disabled+empty.
+    if (journalListEl) journalListEl.hidden = true;
+    if (journalEmptyEl) journalEmptyEl.hidden = false;
     if (columnListEl) columnListEl.hidden = true;
-    if (columnEmptyEl) columnEmptyEl.hidden = false;
-  } else {
     if (columnEmptyEl) columnEmptyEl.hidden = true;
-    renderColumnRows(allColumns);
+  } else {
+    if (journalEmptyEl) journalEmptyEl.hidden = true;
+    renderJournalRows(allJournals);
+    if (columnListEl) columnListEl.hidden = true;
+    if (columnEmptyEl) columnEmptyEl.hidden = true;
   }
 
   updateSaveEnabled();
 }
 
-/** Case-insensitive substring filter on column.name (EXT-08). */
+/** Enable/disable the 栏目 search input and reflect a hint placeholder. */
+function setColumnComboEnabled(enabled) {
+  if (!columnSearchInput) return;
+  columnSearchInput.disabled = !enabled;
+  columnSearchInput.placeholder = enabled ? '搜索或选择栏目' : '请先选择订阅';
+}
+
+// ----- columnStore parsing + scoping ----------------------------------------
+
+/**
+ * Parse a Journal.columnStore (a JSON-string array of column keys) into an
+ * array of string keys. Keys may be numeric column ids or legacy mongo_id
+ * strings — mirror the backend's double-key matching by stringifying all.
+ */
+function parseColumnStore(columnStore) {
+  if (!columnStore) return [];
+  let arr;
+  try {
+    arr = JSON.parse(columnStore);
+  } catch (_) {
+    return [];
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr.map((k) => String(k));
+}
+
+/** Resolve the columns belonging to a journal, preserving columnStore order. */
+function scopeColumnsForJournal(journal) {
+  const storeKeys = parseColumnStore(journal && journal.columnStore);
+  if (storeKeys.length === 0) return [];
+  // Index allColumns by both numeric id and legacy mongoId (backend parity).
+  const byKey = new Map();
+  allColumns.forEach((col) => {
+    if (col._id !== undefined && col._id !== null) byKey.set(String(col._id), col);
+    if (col.id !== undefined && col.id !== null) byKey.set(String(col.id), col);
+    if (col.mongoId) byKey.set(String(col.mongoId), col);
+  });
+  const ordered = [];
+  const emitted = new Set();
+  // Walk columnStore in its stored order so 栏目 list mirrors portal ordering.
+  storeKeys.forEach((rawKey) => {
+    const col = byKey.get(rawKey);
+    if (!col) return;
+    const id = String(col._id);
+    if (emitted.has(id)) return;
+    emitted.add(id);
+    ordered.push(col);
+  });
+  return ordered;
+}
+
+/** Case-insensitive substring filter on column.name (EXT-08), scoped to the picked 订阅. */
 function filterColumns(query) {
   const q = (query || '').trim().toLowerCase();
-  if (!q) return allColumns.slice();
-  return allColumns.filter((c) => String(c.name || '').toLowerCase().includes(q));
+  if (!q) return scopedColumns.slice();
+  return scopedColumns.filter((c) => String(c.name || '').toLowerCase().includes(q));
 }
 
 /**
@@ -460,7 +549,7 @@ function selectColumn(col) {
 }
 
 function openColumnList() {
-  if (allColumns.length === 0) return; // empty-state stays shown
+  if (scopedColumns.length === 0) return; // nothing to show until a 订阅 with columns is picked
   renderColumnRows(filterColumns(columnSearchInput ? columnSearchInput.value : ''));
 }
 
@@ -478,14 +567,14 @@ function wireColumnCombobox() {
     // Typing changes the query → unbind any prior selection so save reflects intent.
     selectedColumnId = null;
     updateSaveEnabled();
-    if (allColumns.length === 0) return;
+    if (scopedColumns.length === 0) return;
     renderColumnRows(filterColumns(columnSearchInput.value));
   });
 
   columnSearchInput.addEventListener('focus', openColumnList);
 
   columnSearchInput.addEventListener('keydown', (evt) => {
-    if (allColumns.length === 0) return;
+    if (scopedColumns.length === 0) return;
     if (evt.key === 'ArrowDown') {
       evt.preventDefault();
       if (columnListEl && columnListEl.hidden) openColumnList();
@@ -511,6 +600,194 @@ function wireColumnCombobox() {
   document.addEventListener('click', (evt) => {
     const section = document.getElementById('column-section');
     if (section && !section.contains(evt.target)) closeColumnList();
+  });
+}
+
+// ===== Journal (订阅) combobox — cascades into the column selector ============
+
+/**
+ * Render the given journal subset into #journal-list. Each row carries data-id =
+ * journal._id and shows journal.name (textContent only — T-11-08). Mirrors the
+ * column combobox row structure/styling.
+ */
+function renderJournalRows(journals) {
+  renderedJournals = journals;
+  journalActiveRowIndex = -1;
+  if (!journalListEl) return;
+
+  journalListEl.innerHTML = '';
+
+  if (journals.length === 0) {
+    journalListEl.hidden = true;
+    if (journalSearchInput) journalSearchInput.setAttribute('aria-expanded', 'false');
+    return;
+  }
+
+  journals.forEach((jr, idx) => {
+    const li = document.createElement('li');
+    li.className = 'column-row';
+    li.setAttribute('role', 'option');
+    li.dataset.id = jr._id;
+    li.dataset.index = String(idx);
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'row-name';
+    nameSpan.textContent = jr.name || ''; // textContent → no markup injection (T-11-08).
+    li.appendChild(nameSpan);
+
+    const check = document.createElement('span');
+    check.className = 'row-check';
+    check.setAttribute('aria-hidden', 'true');
+    check.innerHTML =
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" ' +
+      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M5 12.5l4 4 10-11"/></svg>';
+    li.appendChild(check);
+
+    if (jr._id === selectedJournalId) {
+      li.classList.add('is-selected');
+      li.setAttribute('aria-selected', 'true');
+    }
+
+    li.addEventListener('click', () => selectJournal(jr));
+    li.addEventListener('mouseenter', () => setJournalActiveRow(idx));
+
+    journalListEl.appendChild(li);
+  });
+
+  journalListEl.hidden = false;
+  if (journalSearchInput) journalSearchInput.setAttribute('aria-expanded', 'true');
+}
+
+/** Highlight a journal row for keyboard navigation. */
+function setJournalActiveRow(idx) {
+  journalActiveRowIndex = idx;
+  if (!journalListEl) return;
+  const rows = journalListEl.querySelectorAll('.column-row');
+  rows.forEach((row, i) => {
+    row.classList.toggle('is-active', i === idx);
+  });
+  const active = rows[idx];
+  if (active && typeof active.scrollIntoView === 'function') {
+    active.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+/** Case-insensitive substring filter on journal.name. */
+function filterJournals(query) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) return allJournals.slice();
+  return allJournals.filter((j) => String(j.name || '').toLowerCase().includes(q));
+}
+
+/**
+ * Bind the chosen 订阅: scope the column pool to its columnStore, reset any prior
+ * column selection, and enable the 栏目 combobox. Empty-of-columns 订阅 shows the
+ * column empty state.
+ */
+function selectJournal(journal) {
+  selectedJournalId = journal._id;
+  if (journalSearchInput) journalSearchInput.value = journal.name || '';
+  // Collapse the journal list and re-apply selected styling.
+  if (journalListEl) {
+    journalListEl.hidden = true;
+    const rows = journalListEl.querySelectorAll('.column-row');
+    rows.forEach((row) => {
+      const isSel = row.dataset.id === String(selectedJournalId);
+      row.classList.toggle('is-selected', isSel);
+      if (isSel) row.setAttribute('aria-selected', 'true');
+      else row.removeAttribute('aria-selected');
+    });
+  }
+  if (journalSearchInput) journalSearchInput.setAttribute('aria-expanded', 'false');
+
+  // Cascade: scope columns to this 订阅, clear any prior column pick.
+  selectedColumnId = null;
+  activeRowIndex = -1;
+  scopedColumns = scopeColumnsForJournal(journal);
+  renderedColumns = [];
+  if (columnSearchInput) {
+    columnSearchInput.value = '';
+    columnSearchInput.setAttribute('aria-expanded', 'false');
+  }
+  if (columnListEl) {
+    columnListEl.innerHTML = '';
+    columnListEl.hidden = true;
+  }
+
+  if (scopedColumns.length === 0) {
+    // 订阅 has no resolvable columns under this user → empty state, keep 栏目 disabled.
+    setColumnComboEnabled(false);
+    if (columnEmptyEl) columnEmptyEl.hidden = false;
+  } else {
+    if (columnEmptyEl) columnEmptyEl.hidden = true;
+    setColumnComboEnabled(true);
+  }
+
+  updateSaveEnabled();
+}
+
+function openJournalList() {
+  if (allJournals.length === 0) return; // empty-state stays shown
+  renderJournalRows(filterJournals(journalSearchInput ? journalSearchInput.value : ''));
+}
+
+function closeJournalList() {
+  if (journalListEl) journalListEl.hidden = true;
+  journalActiveRowIndex = -1;
+  if (journalSearchInput) journalSearchInput.setAttribute('aria-expanded', 'false');
+}
+
+/** Wire the 订阅 search input: filtering, keyboard nav, focus, outside-click. */
+function wireJournalCombobox() {
+  if (!journalSearchInput) return;
+
+  journalSearchInput.addEventListener('input', () => {
+    // Typing changes the query → unbind the prior 订阅 selection AND the cascaded
+    // 栏目 pick, then disable 栏目 until a 订阅 is re-chosen.
+    selectedJournalId = null;
+    selectedColumnId = null;
+    scopedColumns = [];
+    renderedColumns = [];
+    if (columnSearchInput) columnSearchInput.value = '';
+    if (columnListEl) columnListEl.hidden = true;
+    if (columnEmptyEl) columnEmptyEl.hidden = true;
+    setColumnComboEnabled(false);
+    updateSaveEnabled();
+    if (allJournals.length === 0) return;
+    renderJournalRows(filterJournals(journalSearchInput.value));
+  });
+
+  journalSearchInput.addEventListener('focus', openJournalList);
+
+  journalSearchInput.addEventListener('keydown', (evt) => {
+    if (allJournals.length === 0) return;
+    if (evt.key === 'ArrowDown') {
+      evt.preventDefault();
+      if (journalListEl && journalListEl.hidden) openJournalList();
+      if (renderedJournals.length === 0) return;
+      const next =
+        journalActiveRowIndex + 1 >= renderedJournals.length ? 0 : journalActiveRowIndex + 1;
+      setJournalActiveRow(next);
+    } else if (evt.key === 'ArrowUp') {
+      evt.preventDefault();
+      if (renderedJournals.length === 0) return;
+      const prev =
+        journalActiveRowIndex - 1 < 0 ? renderedJournals.length - 1 : journalActiveRowIndex - 1;
+      setJournalActiveRow(prev);
+    } else if (evt.key === 'Enter') {
+      if (journalActiveRowIndex >= 0 && journalActiveRowIndex < renderedJournals.length) {
+        evt.preventDefault();
+        selectJournal(renderedJournals[journalActiveRowIndex]);
+      }
+    } else if (evt.key === 'Escape') {
+      closeJournalList();
+    }
+  });
+
+  document.addEventListener('click', (evt) => {
+    const section = document.getElementById('journal-section');
+    if (section && !section.contains(evt.target)) closeJournalList();
   });
 }
 
@@ -629,6 +906,11 @@ async function boot() {
   columnEmptyEl = document.getElementById('column-empty');
   emptyReloginLink = document.getElementById('empty-relogin-link');
 
+  journalSearchInput = document.getElementById('journal-search');
+  journalListEl = document.getElementById('journal-list');
+  journalEmptyEl = document.getElementById('journal-empty');
+  journalEmptyReloginLink = document.getElementById('journal-empty-relogin-link');
+
   resultSiteName = document.getElementById('result-site-name');
   againBtn = document.getElementById('again-btn');
 
@@ -649,8 +931,10 @@ async function boot() {
   // Wire the empty-state re-login escape hatch (WR-01) — same as logout: clear the
   // (possibly expired) session and route to LOGIN.
   if (emptyReloginLink) emptyReloginLink.addEventListener('click', onLogout);
+  if (journalEmptyReloginLink) journalEmptyReloginLink.addEventListener('click', onLogout);
 
-  // Wire the column combobox (filter/keyboard/select).
+  // Wire the 订阅 → 栏目 cascade comboboxes (filter/keyboard/select).
+  wireJournalCombobox();
   wireColumnCombobox();
 
   // Title edits re-evaluate the save-enabled rule (EXT-08 footer rule).

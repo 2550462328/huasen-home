@@ -14,8 +14,8 @@ function resolve(dir) {
 }
 
 module.exports = {
-  outputDir: '../../backend/src/main/resources/static/portal', // 输出路径
-  publicPath: '/portal/',
+  outputDir: '../../deploy/www/portal', // 输出路径
+  publicPath: './',
   transpileDependencies: ['highlight.js'],
   productionSourceMap: false,
   runtimeCompiler: true, // 运行时编译
